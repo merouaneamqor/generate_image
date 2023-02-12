@@ -22,11 +22,9 @@ module GenerateImage
 
       if response.code == '200'
         image_url = JSON.parse(response.body)['data'][0]['url']
-
-        image_response = Net::HTTP.get_response(URI(image_url))
-        return image_response.body
+        return { image_url: image_url }
       else
-        raise "Failed to generate image: #{response.body}"
+        return { error: "Failed to generate image" }, 500
       end
     end
   end
