@@ -6,8 +6,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["AMQOR Merouane"]
   spec.email         = ["marouane.amqor6@gmail.com"]
 
-  spec.summary       = "A Ruby gem that provides a simple and easy-to-use interface for generating images using the DALL-E API"
-  spec.description   = "The 'generate_image' gem is a Ruby gem that provides a simple and easy-to-use interface for generating images using the DALL-E API. The gem is designed to be used in Ruby on Rails projects, but it can also be used in other Ruby projects."
+  spec.summary       = "Generate images using the DALL-E API"
+  spec.description   = "Unleash your imagination and create stunning images with the 'generate_image' gem. This Ruby gem provides a seamless interface for accessing the powerful DALL-E API and generates images based on the text you provide. Perfect for Ruby on Rails projects, but can also be used in other Ruby projects."
   spec.homepage      = "https://github.com/merouaneamqor/generate_image"
   spec.license       = "MIT"
   spec.required_ruby_version = Gem::Requirement.new(">= 2.3.0")
