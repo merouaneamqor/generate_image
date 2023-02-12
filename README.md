@@ -1,8 +1,12 @@
 # GenerateImage
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/generate_image`. To experiment with that code, run `bin/console` for an interactive prompt.
+The 'image_generator' gem is a Ruby gem that provides a simple and easy-to-use interface for generating images using the DALL-E API. The gem is designed to be used in Ruby on Rails projects, but it can also be used in other Ruby projects.
 
-TODO: Delete this and the text above, and describe your gem
+The gem provides a generate_image method, which takes a text argument and returns the generated image binary data. The method makes a request to the DALL-E API to generate an image based on the text, and returns the image binary data.
+
+The gem uses the Net::HTTP library to make the API request, and it requires the API key to be set as an environment variable named DALL_E_API_KEY. The gem also includes error handling to ensure that the image generation is successful and to raise an error if there's any issue.
+
+To use the gem, you simply need to add it to your Rails project's Gemfile and run bundle install. You can then use the generate_image method in your Rails controllers to generate images and send them to the client.
 
 ## Installation
 
