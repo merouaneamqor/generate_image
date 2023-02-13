@@ -3,15 +3,21 @@ require 'json'
 
 module GenerateImage
   class << self
+    API_ENDPOINT = 'https://api.openai.com/v1/images/generations'
+    MODEL_NAME = 'image-alpha-001'
+
     def generate_image(text)
       api_key = ENV['DALL_E_API_KEY']
+      unless api_key
+        raise StandardError, "API Key not set"
+      end
 
-      uri = URI('https://api.openai.com/v1/images/generations')
+      uri = URI(API_ENDPOINT)
       request = Net::HTTP::Post.new(uri)
       request['Content-Type'] = 'application/json'
       request['Authorization'] = "Bearer #{api_key}"
       request.body = {
-        model: 'image-alpha-001',
+        model: MODEL_NAME,
         prompt: text,
         num_images: 1
       }.to_json
@@ -24,7 +30,9 @@ module GenerateImage
         image_url = JSON.parse(response.body)['data'][0]['url']
         return { image_url: image_url }
       else
-        return { error: "Failed to generate image" }, 500
+        message = "Failed to generate image. Response code: #{response.code}. Response body: #{response.body}"
+        Rails.logger.error(message) if defined?(Rails)
+        return { error: message }, 500
       end
     end
   end
