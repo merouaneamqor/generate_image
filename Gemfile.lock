@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    generate_image (0.1.1)
+    generate_image (0.1.2)
       json
       net-http
       openai
