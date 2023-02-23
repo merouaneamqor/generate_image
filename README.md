@@ -16,7 +16,7 @@ Or install it directly by running:
 ## Usage
 The gem provides a generate_image method, which takes a text argument and returns the generated image URL or image base64 as a hash. The method makes a request to the DALL-E API to generate an image based on the provided text.
 
-Before using the generate_image method, you must set your OpenAI API key as an environment variable named DALL_E_API_KEY. The gem uses the Net::HTTP library to make API requests and includes error handling to ensure successful image generation. In case of any errors, the method will raise a RequestFailed exception.
+Before using the generate_image method, you must set your OpenAI API key as an environment variable named `DALL_E_API_KEY`. The gem uses the `Net::HTTP` library to make API requests and includes error handling to ensure successful image generation. In case of any errors, the method will raise a RequestFailed exception.
 
 ### Examples
 
