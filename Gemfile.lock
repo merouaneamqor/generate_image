@@ -1,11 +1,11 @@
 PATH
   remote: .
   specs:
-    generate_image (0.1.2)
-      json
-      net-http
-      openai
-      sinatra
+    generate_image (1.0.1)
+      json (~> 2.6.3)
+      net-http (~> 0.3.2)
+      openai (~> 0.3.0)
+      sinatra (~> 3.0.5)
 
 GEM
   remote: https://rubygems.org/
