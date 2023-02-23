@@ -43,17 +43,17 @@ Before using the generate_image method, you must set your OpenAI API key as an e
 ## Options
 The generate_image method accepts a hash of options to customize the generated images. Here are the available options:
 
-model - The name of the model to use for generating the images. Default is image-alpha-001.
-num_images - The number of images to generate. Default is 1.
-size - The dimensions of the generated images in the format widthxheight. Default is 512x512.
-response_format - The format of the response, either url or base64. Default is url.
-style - The model or style to use for generating the images. Default is nil, which uses the default style of the selected model.
-scale - The scaling factor for the generated image. Default is 1.
-seed - The random seed to use for the generation process. Default is nil.
-quality - The JPEG compression quality of the generated image. Default is 80.
-text_model - The name of the model to use for generating text prompts. Default is text-davinci-002.
-text_prompt - The text prompt to use for generating the image. Default is nil.
-text_length - The maximum length of the generated text. Default is nil.
+`model` - The name of the model to use for generating the images. Default is `image-alpha-001`.
+`num_images` - The number of images to generate. Default is `1`.
+`size` - The dimensions of the generated images in the format widthxheight. Default is `512x512`.
+`response_format` - The format of the response, either `url` or `base64`. Default is `url`.
+`style` - The model or style to use for generating the images. Default is `nil`, which uses the default style of the selected model.
+`scale` - The scaling factor for the generated image. Default is `1`.
+`seed` - The random seed to use for the generation process. Default is `nil`.
+`quality` - The JPEG compression quality of the generated image. Default is `80`.
+`text_model` - The name of the model to use for generating text prompts. Default is `text-davinci-002`.
+`text_prompt` - The text prompt to use for generating the image. Default is `nil`.
+`text_length` - The maximum length of the generated text. Default is `nil`.
 ## Development
 To contribute to the development of this gem, clone the repository and run the following commands to install dependencies and run tests:
 
