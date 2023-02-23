@@ -1,6 +1,3 @@
-require 'net/http'
-require 'json'
-
 module GenerateImage
   class RequestFailed < StandardError; end
 
@@ -22,13 +19,13 @@ module GenerateImage
         model: options[:model] || IMAGE_MODEL_NAME,
         prompt: text,
         num_images: options[:num_images] || 1,
-        size: options[:size] || '512x512',
+        size: options[:size] || '1024x1024',
         response_format: options[:response_format] || 'url',
         style: options[:style] || nil,
         scale: options[:scale] || 1,
         seed: options[:seed] || nil,
-        quality: options[:quality] || 80,
-        text_model: options[:text_model] || TEXT_MODEL_NAME,
+        quality: options[:quality] || 100,
+        text_model: options[:text_model] || 'text-davinci-002',
         text_prompt: options[:text_prompt] || nil,
         text_length: options[:text_length] || nil
       }.to_json
