@@ -18,7 +18,7 @@ module GenerateImage
       uri = URI(API_ENDPOINT)
       request = Net::HTTP::Post.new(uri)
       request['Content-Type'] = 'application/json'
-      request['Authorization'] = "Bearer #{API_KEY}"
+      request['Authorization'] = "Bearer #{@api_key}"
       request.body = {
         prompt: text,
         n: options[:num_images] || 1,
