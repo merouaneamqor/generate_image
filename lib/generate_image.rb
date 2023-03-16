@@ -4,33 +4,26 @@ require 'json'
 module GenerateImage
   class RequestFailed < StandardError; end
 
-  class << self
+  class Client
     API_ENDPOINT = 'https://api.openai.com/v1/images/generations'
-    IMAGE_MODEL_NAME = 'image-alpha-001'
-    TEXT_MODEL_NAME = 'text-davinci-002'
-    API_KEY = ENV['DALL_E_API_KEY']
+
+    def initialize(api_key = nil)
+      @api_key = api_key || ENV['DALL_E_API_KEY']
+    end
 
     def generate_image(text, options = {})
-      unless API_KEY
+      unless @api_key
         raise StandardError, "API Key not set"
       end
       uri = URI(API_ENDPOINT)
       request = Net::HTTP::Post.new(uri)
       request['Content-Type'] = 'application/json'
-      request['Authorization'] = "Bearer #{API_KEY}"
+      request['Authorization'] = "Bearer #{@api_key}"
       request.body = {
-        model: options[:model] || IMAGE_MODEL_NAME,
         prompt: text,
-        num_images: options[:num_images] || 1,
+        n: options[:num_images] || 1,
         size: options[:size] || '512x512',
         response_format: options[:response_format] || 'url',
-        style: options[:style] || nil,
-        scale: options[:scale] || 1,
-        seed: options[:seed] || nil,
-        quality: options[:quality] || 80,
-        text_model: options[:text_model] || TEXT_MODEL_NAME,
-        text_prompt: options[:text_prompt] || nil,
-        text_length: options[:text_length] || nil
       }.to_json
 
       response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
