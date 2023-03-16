@@ -17,20 +17,18 @@ module GenerateImage
     end
 
     def generate_image(text, options = {})
+      unless API_KEY
+        raise StandardError, "API Key not set"
+      end
       uri = URI(API_ENDPOINT)
       request = Net::HTTP::Post.new(uri)
       request['Content-Type'] = 'application/json'
-      request['Authorization'] = "Bearer #{@api_key}"
+      request['Authorization'] = "Bearer #{API_KEY}"
       request.body = {
-        model: options[:model] || IMAGE_MODEL_NAME,
         prompt: text,
-        num_images: options[:num_images] || 1,
+        n: options[:num_images] || 1,
         size: options[:size] || '512x512',
         response_format: options[:response_format] || 'url',
-        style: options[:style] || nil,
-        scale: options[:scale] || 1,
-        seed: options[:seed] || nil,
-        quality: options[:quality] || 80
       }.to_json
 
       response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
@@ -49,6 +47,5 @@ module GenerateImage
         raise RequestFailed, "Failed to generate image. Response code: #{response.code}. Response body: #{response.body}"
       end
     end
-
   end
 end
