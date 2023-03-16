@@ -7,8 +7,8 @@ module GenerateImage
   class Client
     API_ENDPOINT = 'https://api.openai.com/v1/images/generations'
 
-    def initialize(api_key)
-      @api_key = api_key
+    def initialize(api_key = nil)
+      @api_key = api_key || ENV['DALL_E_API_KEY']
     end
 
     def generate_image(text, options = {})
