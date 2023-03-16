@@ -6,18 +6,13 @@ module GenerateImage
 
   class Client
     API_ENDPOINT = 'https://api.openai.com/v1/images/generations'
-    IMAGE_MODEL_NAME = 'image-alpha-001'
-    TEXT_MODEL_NAME = 'text-davinci-002'
 
-    attr_accessor :api_key
-
-    def initialize(api_key = nil)
-      @api_key = api_key || ENV['DALL_E_API_KEY']
-      raise StandardError, "API Key not set" unless @api_key
+    def initialize(api_key)
+      @api_key = api_key
     end
 
     def generate_image(text, options = {})
-      unless API_KEY
+      unless @api_key
         raise StandardError, "API Key not set"
       end
       uri = URI(API_ENDPOINT)
