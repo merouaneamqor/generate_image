@@ -1,5 +1,4 @@
-require:
-  - rubocop-rspec
+plugins:
   - rubocop-performance
 
 AllCops:
@@ -25,16 +24,6 @@ Style/Documentation:
   Enabled: false
 
 Style/FrozenStringLiteralComment:
-  Enabled: false
-
-# RSpec
-RSpec/MultipleExpectations:
-  Enabled: false
-
-RSpec/ExampleLength:
-  Enabled: false
-
-RSpec/DescribeClass:
   Enabled: false
 
 # Performance
