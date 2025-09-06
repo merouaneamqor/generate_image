@@ -6,6 +6,9 @@ gemspec
 gem "rake", "~> 12.0"
 gem "rspec", "~> 3.0"
 
+# Temporarily exclude openai for local testing
+# gem "openai", "= 0.20.0"
+
 # Development dependencies
 group :development do
   gem "rubocop", "~> 1.60"
