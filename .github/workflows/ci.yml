@@ -33,6 +33,7 @@ jobs:
     - name: Install dependencies
       run: |
         bundle config set --local deployment false
+        bundle config set --local frozen false
         bundle install --jobs 4 --retry 3
 
     - name: Run tests
@@ -63,6 +64,7 @@ jobs:
     - name: Install dependencies
       run: |
         bundle config set --local deployment false
+        bundle config set --local frozen false
         bundle install --jobs 4 --retry 3
 
     - name: Run RuboCop
@@ -88,7 +90,9 @@ jobs:
         bundler-cache: true
 
     - name: Install dependencies
-      run: bundle install --jobs 4 --retry 3
+      run: |
+        bundle config set --local frozen false
+        bundle install --jobs 4 --retry 3
 
     - name: Build gem
       run: bundle exec rake build
