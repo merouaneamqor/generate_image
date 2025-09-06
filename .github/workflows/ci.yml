@@ -18,10 +18,21 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
+      uses: ruby/setup-ruby@v1.191.0
       with:
         ruby-version: ${{ matrix.ruby-version }}
         bundler-cache: true
+        cache-version: 1
+
+    - name: Debug Ruby setup
+      run: |
+        ruby --version
+        gem --version
+        which gem
+
+    - name: Install Bundler
+      run: |
+        gem install bundler
 
     - name: Install dependencies
       run: |
@@ -42,10 +53,15 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
+      uses: ruby/setup-ruby@v1.191.0
       with:
         ruby-version: '3.2'
         bundler-cache: true
+        cache-version: 1
+
+    - name: Install Bundler
+      run: |
+        gem install bundler
 
     - name: Build gem
       run: bundle exec rake build
