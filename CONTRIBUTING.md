@@ -32,8 +32,8 @@ This project follows a code of conduct to ensure a welcoming environment for all
 
 ### Prerequisites
 
-- Ruby 3.1.0 or higher (recommended: 3.2+)
-- Bundler gem (comes with Ruby 3.1+)
+- Ruby 3.2.0 or higher (required by openai gem)
+- Bundler gem (comes with Ruby 3.2+)
 - Git
 
 ### Quick Setup
@@ -319,7 +319,7 @@ bundle exec rspec --format documentation
 
 The project uses GitHub Actions for automated testing:
 
-- **Multi-Ruby Testing**: Tests run on Ruby 3.1, 3.2, and 3.3 (recent LTS versions)
+- **Multi-Ruby Testing**: Tests run on Ruby 3.2 and 3.3 (compatible with openai gem)
 - **Parallel Jobs**: Separate jobs for testing, linting, and building
 - **Security Audits**: Automated vulnerability scanning with bundle audit
 - **Code Quality**: RuboCop linting with GitHub integration
