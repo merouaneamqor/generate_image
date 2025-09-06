@@ -1,5 +1,5 @@
 # GenerateImage
-The GenerateImage gem is a Ruby gem that provides an interface for generating images using the OpenAI DALL-E API. This gem can be used in Ruby on Rails projects or any other Ruby projects.
+The GenerateImage gem is a Ruby gem that provides a unified interface for generating images using multiple AI image generation APIs. It supports OpenAI DALL-E, Stability AI, Hugging Face, and allows easy extension to other providers.
 
 ## Installation
 Add this line to your application's Gemfile:
@@ -14,56 +14,162 @@ Or install it directly by running:
 
     gem install generate_image
 ## Usage
-The gem provides a generate_image method, which takes a text argument and returns the generated image URL or image base64 as a hash. The method makes a request to the DALL-E API to generate an image based on the provided text.
 
-Before using the generate_image method, you must set your OpenAI API key as an environment variable named `DALL_E_API_KEY`. The gem uses the `Net::HTTP` library to make API requests and includes error handling to ensure successful image generation. In case of any errors, the method will raise a RequestFailed exception.
+The gem provides a unified interface for multiple image generation APIs. You can use the default OpenAI provider or configure other providers like Stability AI, Hugging Face, or custom APIs.
 
-### Examples
+### Quick Start
 
-    require 'generate_image'
+```ruby
+require 'generate_image'
 
-    # Set the DALL-E API key
-    ENV['DALL_E_API_KEY'] = 'your_api_key'
+# Set API keys as environment variables
+ENV['OPENAI_API_KEY'] = 'your_openai_key'
+ENV['STABILITY_API_KEY'] = 'your_stability_key'
+ENV['HUGGINGFACE_API_KEY'] = 'your_huggingface_key'
 
-    # Generate a single image with default options
-    result = GenerateImage.generate_image('A three-story castle made of ice cream')
-    if result[:error]
-      puts result[:error]
-    else
-      puts result[:image_url]
-    end
+# Use the convenience method (defaults to OpenAI)
+result = GenerateImage.generate_image('A futuristic city')
+puts result[:image_url]
+```
 
-    # Generate a single image with custom options
-    result = GenerateImage.generate_image('A cat playing the piano', model: 'image-alpha-001', num_images: 2, size: '1024x1024', response_format: 'base64', quality: 90)
-    if result[:error]
-      puts result[:error]
-    else
-      puts result[:image_base64]
-    end
+### Using Different Providers
+
+```ruby
+# Use OpenAI (default)
+result = GenerateImage.generate_image('A cat playing piano', provider: :openai)
+
+# Use Stability AI
+result = GenerateImage.generate_image('A cat playing piano',
+  provider: :stability_ai,
+  model: 'stable-diffusion-v1-5'
+)
+
+# Use Hugging Face
+result = GenerateImage.generate_image('A cat playing piano',
+  provider: :hugging_face,
+  model: 'CompVis/stable-diffusion-v1-4'
+)
+```
+
+### Advanced Configuration
+
+```ruby
+# Configure providers and settings
+GenerateImage.configure do |config|
+  # Set default provider
+  config.default_provider = :stability_ai
+
+  # Register custom provider with API key
+  config.register_provider(:my_custom, MyCustomProvider, 'custom_api_key')
+end
+
+# Use configured default
+client = GenerateImage::Client.new
+result = client.generate_image('A beautiful sunset')
+```
+
+### Using Client Class
+
+```ruby
+# Specify provider explicitly
+client = GenerateImage::Client.new(:stability_ai)
+
+# Get provider information
+puts "Available models: #{client.available_models}"
+puts "Supported sizes: #{client.supported_sizes}"
+puts "Provider: #{client.provider_name}"
+
+# Generate image
+result = client.generate_image('A mountain landscape',
+  model: 'stable-diffusion-xl',
+  size: '1024x1024'
+)
+```
+
+## Providers and API Keys
+
+The gem supports multiple image generation providers. Set the appropriate environment variables for the providers you want to use:
+
+- **OpenAI**: `OPENAI_API_KEY` or `DALL_E_API_KEY`
+- **Stability AI**: `STABILITY_API_KEY`
+- **Hugging Face**: `HUGGINGFACE_API_KEY`
+- **Custom API**: Configure programmatically
+
+### Built-in Providers
+
+| Provider | Environment Variable | Models |
+|----------|---------------------|---------|
+| OpenAI | `OPENAI_API_KEY` | dall-e-2, dall-e-3, gpt-image-1 |
+| Stability AI | `STABILITY_API_KEY` | stable-diffusion-v1-5, stable-diffusion-xl |
+| Hugging Face | `HUGGINGFACE_API_KEY` | CompVis/stable-diffusion-v1-4, etc. |
+
 ## Options
-The generate_image method accepts a hash of options to customize the generated images. Here are the available options:
 
-`model` - The name of the model to use for generating the images. Default is `image-alpha-001`.
+The generate_image method accepts a hash of options to customize the generated images. Options vary by provider:
 
-`num_images` - The number of images to generate. Default is `1`.
+### Common Options (all providers)
+- `provider` - The provider to use (`:openai`, `:stability_ai`, `:hugging_face`, etc.)
+- `model` - The model to use (provider-specific)
+- `num_images` - Number of images to generate (default: 1)
+- `size` - Image dimensions (provider-specific, default: '1024x1024')
 
-`size` - The dimensions of the generated images in the format widthxheight. Default is `512x512`.
+### OpenAI Provider Options
+- `model`: `dall-e-2`, `dall-e-3`, `gpt-image-1` (default: `dall-e-2`)
+- `size`: `256x256`, `512x512`, `1024x1024` (dall-e-2); `1024x1024`, `1792x1024`, `1024x1792` (dall-e-3)
+- `response_format`: `url`, `b64_json` (default: `url`)
+- `quality`: `standard`, `hd` (dall-e-3 only)
+- `style`: `vivid`, `natural` (dall-e-3 only)
+- `user`: User identifier for monitoring
 
-`response_format` - The format of the response, either `url` or `base64`. Default is `url`.
+### Stability AI Provider Options
+- `model`: `stable-diffusion-v1-5`, `stable-diffusion-xl`, etc.
+- `size`: `256x256`, `512x512`, `768x768`, `1024x1024`, etc.
+- `steps`: Number of inference steps (default: 20)
+- `cfg_scale`: Classifier-free guidance scale (default: 7)
+- `style_preset`: Style preset to use
 
-`style` - The model or style to use for generating the images. Default is `nil`, which uses the default style of the selected model.
+### Hugging Face Provider Options
+- `model`: Model ID (e.g., `CompVis/stable-diffusion-v1-4`)
+- `steps`: Number of inference steps (default: 20)
+- `guidance_scale`: Guidance scale (default: 7.5)
+- `negative_prompt`: Negative prompt for image generation
 
-`scale` - The scaling factor for the generated image. Default is `1`.
+## Creating Custom Providers
 
-`seed` - The random seed to use for the generation process. Default is `nil`.
+You can easily create custom providers for other APIs:
 
-`quality` - The JPEG compression quality of the generated image. Default is `80`.
+```ruby
+class MyCustomProvider < GenerateImage::HTTPProvider
+  def initialize(api_key = nil)
+    super(api_key, 'https://my-custom-api.com')
+  end
 
-`text_model` - The name of the model to use for generating text prompts. Default is `text-davinci-002`.
+  def build_endpoint(options)
+    "#{@base_url}/v1/generate"
+  end
 
-`text_prompt` - The text prompt to use for generating the image. Default is `nil`.
+  def build_request_body(prompt, options)
+    {
+      prompt: prompt,
+      model: options[:model] || 'default',
+      width: options[:size].split('x')[0].to_i,
+      height: options[:size].split('x')[1].to_i
+    }
+  end
 
-`text_length` - The maximum length of the generated text. Default is `nil`.
+  def available_models
+    ['model1', 'model2']
+  end
+end
+
+# Register your custom provider
+GenerateImage.configure do |config|
+  config.register_provider(:my_custom, MyCustomProvider, 'your_api_key')
+end
+
+# Use it
+result = GenerateImage.generate_image('test', provider: :my_custom)
+```
 
 ## Development
 To contribute to the development of this gem, clone the repository and run the following commands to install dependencies and run tests:
