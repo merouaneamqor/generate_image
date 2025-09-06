@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  RUBY_VERSION: '3.2'
+
+jobs:
+  release:
+    name: Release Gem
+    runs-on: ubuntu-latest
+    if: github.event.repository.fork == false
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1.191.0
+      with:
+        ruby-version: ${{ env.RUBY_VERSION }}
+        bundler-cache: true
+
+    - name: Install dependencies
+      run: bundle install --jobs 4 --retry 3
+
+    - name: Run tests
+      run: bundle exec rspec --fail-fast
+
+    - name: Build gem
+      run: bundle exec rake build
+
+    - name: Test gem installation
+      run: |
+        gem install pkg/generate_image-*.gem --no-document
+        ruby -e "require 'generate_image'; puts '✅ Gem installed successfully'"
+
+    - name: Publish to RubyGems
+      run: |
+        mkdir -p $HOME/.gem
+        touch $HOME/.gem/credentials
+        chmod 0600 $HOME/.gem/credentials
+        printf -- "---\n:rubygems_api_key: ${RUBYGEMS_API_KEY}\n" > $HOME/.gem/credentials
+        gem push pkg/generate_image-*.gem
+      env:
+        RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          ## What's Changed
+
+          See the [CHANGELOG](CHANGELOG.md) for details.
+
+          ## Installation
+
+          ```bash
+          gem install generate_image
+          ```
+
+          Or add to your Gemfile:
+          ```ruby
+          gem 'generate_image'
+          ```
+        draft: false
+        prerelease: false

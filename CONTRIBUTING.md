@@ -32,8 +32,8 @@ This project follows a code of conduct to ensure a welcoming environment for all
 
 ### Prerequisites
 
-- Ruby 2.7.0 or higher
-- Bundler gem
+- Ruby 3.1.0 or higher (recommended: 3.2+)
+- Bundler gem (comes with Ruby 3.1+)
 - Git
 
 ### Quick Setup
@@ -44,9 +44,14 @@ This project follows a code of conduct to ensure a welcoming environment for all
    git clone https://github.com/your-username/generate_image.git
    cd generate_image
    ```
-3. **Install dependencies**:
+3. **Run the automated setup script**:
+   ```bash
+   ./script/setup
+   ```
+   Or manually:
    ```bash
    bundle install
+   bundle exec rake quality
    ```
 4. **Run tests** to ensure everything works:
    ```bash
@@ -314,10 +319,12 @@ bundle exec rspec --format documentation
 
 The project uses GitHub Actions for automated testing:
 
-- **Multi-Ruby Testing**: Tests run on Ruby 2.7, 3.0, 3.1, 3.2, and 3.3
-- **Automated Checks**: Runs on every push and pull request
-- **Build Verification**: Ensures the gem builds correctly
-- **Installation Testing**: Verifies the gem can be installed
+- **Multi-Ruby Testing**: Tests run on Ruby 3.1, 3.2, and 3.3 (recent LTS versions)
+- **Parallel Jobs**: Separate jobs for testing, linting, and building
+- **Security Audits**: Automated vulnerability scanning with bundle audit
+- **Code Quality**: RuboCop linting with GitHub integration
+- **Automated Releases**: Publishing to RubyGems on version tags
+- **Dependency Updates**: Dependabot for automated dependency management
 
 ### Writing Tests
 

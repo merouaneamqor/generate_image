@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+echo "🚀 Setting up generate_image development environment..."
+
+# Check if Ruby is installed
+if ! command -v ruby &> /dev/null; then
+    echo "❌ Ruby is not installed. Please install Ruby 3.1+ first."
+    echo "   Visit: https://www.ruby-lang.org/en/documentation/installation/"
+    exit 1
+fi
+
+# Check Ruby version
+ruby_version=$(ruby -v | grep -oP '\d+\.\d+\.\d+')
+required_version="3.1.0"
+
+if ! [ "$(printf '%s\n' "$required_version" "$ruby_version" | sort -V | head -n1)" = "$required_version" ]; then
+    echo "❌ Ruby $ruby_version is not supported. Please use Ruby $required_version or higher."
+    exit 1
+fi
+
+echo "✅ Ruby $ruby_version detected"
+
+# Install bundler if not present
+if ! command -v bundle &> /dev/null; then
+    echo "📦 Installing Bundler..."
+    gem install bundler
+fi
+
+# Install dependencies
+echo "📦 Installing dependencies..."
+bundle install
+
+# Run setup checks
+echo "🔍 Running setup checks..."
+bundle exec rake quality
+
+echo ""
+echo "🎉 Setup complete! You can now:"
+echo "   • Run tests: bundle exec rspec"
+echo "   • Run linting: bundle exec rubocop"
+echo "   • Build gem: bundle exec rake build"
+echo "   • Run all checks: bundle exec rake"

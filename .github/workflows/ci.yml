@@ -6,67 +6,101 @@ on:
   pull_request:
     branches: [ main, master ]
 
+env:
+  RUBY_VERSION: '3.2'
+
 jobs:
+  # Test across multiple Ruby versions
   test:
+    name: Test (Ruby ${{ matrix.ruby-version }})
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
-        ruby-version: ['2.7', '3.0', '3.1', '3.2', '3.3']
+        ruby-version: ['3.1', '3.2', '3.3'] # Focus on recent LTS versions
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1.191.0
       with:
         ruby-version: ${{ matrix.ruby-version }}
         bundler-cache: true
-        cache-version: 1
-
-    - name: Debug Ruby setup
-      run: |
-        ruby --version
-        gem --version
-        which gem
-
-    - name: Install Bundler
-      run: |
-        gem install bundler
 
     - name: Install dependencies
       run: |
-        bundle config unset deployment
-        bundle install
+        bundle config set --local deployment false
+        bundle install --jobs 4 --retry 3
 
     - name: Run tests
-      run: bundle exec rspec
+      run: bundle exec rspec --format progress --format RspecJunitFormatter --out test-results-${{ matrix.ruby-version }}.xml
 
-    - name: Run RuboCop
-      run: bundle exec rubocop --except Metrics/BlockLength,Metrics/MethodLength
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-ruby-${{ matrix.ruby-version }}
+        path: test-results-${{ matrix.ruby-version }}.xml
 
-  build:
+  # Code quality checks
+  lint:
+    name: Code Quality
     runs-on: ubuntu-latest
-    needs: test
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1.191.0
       with:
-        ruby-version: '3.2'
+        ruby-version: ${{ env.RUBY_VERSION }}
         bundler-cache: true
-        cache-version: 1
 
-    - name: Install Bundler
+    - name: Install dependencies
       run: |
-        gem install bundler
+        bundle config set --local deployment false
+        bundle install --jobs 4 --retry 3
+
+    - name: Run RuboCop
+      run: bundle exec rubocop --parallel --format progress --format github
+
+    - name: Security audit
+      run: bundle exec bundle audit check --update
+
+  # Build and test gem
+  build:
+    name: Build & Test Gem
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1.191.0
+      with:
+        ruby-version: ${{ env.RUBY_VERSION }}
+        bundler-cache: true
+
+    - name: Install dependencies
+      run: bundle install --jobs 4 --retry 3
 
     - name: Build gem
       run: bundle exec rake build
 
     - name: Test gem installation
       run: |
-        gem install pkg/generate_image-*.gem
-        ruby -e "require 'generate_image'; puts 'Gem installed successfully'"
+        gem install pkg/generate_image-*.gem --no-document
+        ruby -e "require 'generate_image'; puts '✅ Gem installed successfully'"
+
+    - name: Upload built gem
+      uses: actions/upload-artifact@v4
+      with:
+        name: built-gem
+        path: pkg/generate_image-*.gem
+        retention-days: 30
