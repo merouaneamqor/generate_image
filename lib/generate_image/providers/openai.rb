@@ -15,7 +15,7 @@ module GenerateImage
     # @param options [Hash] Additional options for image generation
     # @return [Hash] Response containing :image_url or :image_base64
     def generate_image(prompt, options = {})
-      raise NotImplementedError, "Subclasses must implement generate_image"
+      raise NotImplementedError, 'Subclasses must implement generate_image'
     end
 
     # Check if this provider is properly configured
@@ -39,16 +39,16 @@ module GenerateImage
     protected
 
     def validate_prompt(prompt)
-      unless prompt.is_a?(String) && !prompt.strip.empty?
-        raise ArgumentError, "Prompt must be a non-empty string"
-      end
+      return if prompt.is_a?(String) && !prompt.strip.empty?
+
+      raise ArgumentError, 'Prompt must be a non-empty string'
     end
   end
 
   # OpenAI DALL-E provider
   class OpenAIProvider < Provider
     def initialize(api_key = nil)
-      super(api_key || ENV['OPENAI_API_KEY'] || ENV['DALL_E_API_KEY'])
+      super(api_key || ENV['OPENAI_API_KEY'] || ENV.fetch('DALL_E_API_KEY', nil))
       @client = OpenAI::Client.new(access_token: @api_key) if configured?
     rescue ArgumentError
       # For backward compatibility with older OpenAI SDK versions
@@ -57,7 +57,7 @@ module GenerateImage
 
     def generate_image(prompt, options = {})
       validate_prompt(prompt)
-      return { error: "OpenAI provider not configured" } unless configured?
+      return { error: 'OpenAI provider not configured' } unless configured?
 
       params = build_parameters(prompt, options)
 
@@ -66,7 +66,7 @@ module GenerateImage
         process_response(response, options)
       rescue OpenAI::Error => e
         raise RequestFailed, "OpenAI API error: #{e.message}"
-      rescue => e
+      rescue StandardError => e
         raise RequestFailed, "Unexpected error: #{e.message}"
       end
     end
@@ -77,9 +77,9 @@ module GenerateImage
 
     def supported_sizes
       {
-        'dall-e-2' => ['256x256', '512x512', '1024x1024'],
-        'dall-e-3' => ['1024x1024', '1792x1024', '1024x1792'],
-        'gpt-image-1' => ['1024x1024', '1536x1024', '1024x1536', 'auto']
+        'dall-e-2' => %w[256x256 512x512 1024x1024],
+        'dall-e-3' => %w[1024x1024 1792x1024 1024x1792],
+        'gpt-image-1' => %w[1024x1024 1536x1024 1024x1536 auto]
       }
     end
 
@@ -103,23 +103,19 @@ module GenerateImage
     end
 
     def process_response(response, options)
-      if response.data && response.data.length > 0
-        image = response.data.first
-        if options[:response_format] == 'b64_json' || options[:response_format] == 'base64'
-          if image.b64_json
-            { image_base64: image.b64_json }
-          else
-            raise RequestFailed, "Base64 format requested but not available in response"
-          end
-        else
-          if image.url
-            { image_url: image.url }
-          else
-            raise RequestFailed, "URL format requested but not available in response"
-          end
-        end
+      raise RequestFailed, 'No image data received in response' unless response.data&.length&.positive?
+
+      image = response.data.first
+      if %w[b64_json base64].include?(options[:response_format])
+        raise RequestFailed, 'Base64 format requested but not available in response' unless image.b64_json
+
+        { image_base64: image.b64_json }
+
       else
-        raise RequestFailed, "No image data received in response"
+        raise RequestFailed, 'URL format requested but not available in response' unless image.url
+
+        { image_url: image.url }
+
       end
     end
   end

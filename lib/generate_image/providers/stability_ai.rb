@@ -5,16 +5,16 @@ require 'uri'
 module GenerateImage
   # Stability AI provider for image generation
   class StabilityAIProvider < Provider
-    BASE_URL = 'https://api.stability.ai'
+    BASE_URL = 'https://api.stability.ai'.freeze
 
     def initialize(api_key = nil)
-      super(api_key || ENV['STABILITY_API_KEY'])
+      super(api_key || ENV.fetch('STABILITY_API_KEY', nil))
       @base_url = ENV['STABILITY_BASE_URL'] || BASE_URL
     end
 
     def generate_image(prompt, options = {})
       validate_prompt(prompt)
-      return { error: "Stability AI provider not configured" } unless configured?
+      return { error: 'Stability AI provider not configured' } unless configured?
 
       model = options[:model] || 'stable-diffusion-v1-5'
       endpoint = "#{@base_url}/v1/generation/#{model}/text-to-image"
@@ -45,7 +45,7 @@ module GenerateImage
         end
 
         process_response(response)
-      rescue => e
+      rescue StandardError => e
         raise RequestFailed, "Stability AI API error: #{e.message}"
       end
     end
@@ -58,7 +58,7 @@ module GenerateImage
     end
 
     def supported_sizes
-      ['256x256', '512x512', '768x768', '1024x1024', '1536x1536']
+      %w[256x256 512x512 768x768 1024x1024 1536x1536]
     end
 
     private
@@ -75,25 +75,22 @@ module GenerateImage
       case response.code.to_i
       when 200
         data = JSON.parse(response.body)
-        if data['artifacts'] && data['artifacts'].length > 0
-          artifact = data['artifacts'].first
-          if artifact['base64']
-            { image_base64: artifact['base64'] }
-          else
-            raise RequestFailed, "No base64 data in Stability AI response"
-          end
-        else
-          raise RequestFailed, "No artifacts in Stability AI response"
-        end
+        raise RequestFailed, 'No artifacts in Stability AI response' unless data['artifacts']&.length&.positive?
+
+        artifact = data['artifacts'].first
+        raise RequestFailed, 'No base64 data in Stability AI response' unless artifact['base64']
+
+        { image_base64: artifact['base64'] }
+
       when 400
         error_data = JSON.parse(response.body)
         raise RequestFailed, "Stability AI validation error: #{error_data['message']}"
       when 401
-        raise RequestFailed, "Stability AI authentication failed"
+        raise RequestFailed, 'Stability AI authentication failed'
       when 403
-        raise RequestFailed, "Stability AI access forbidden"
+        raise RequestFailed, 'Stability AI access forbidden'
       when 429
-        raise RequestFailed, "Stability AI rate limit exceeded"
+        raise RequestFailed, 'Stability AI rate limit exceeded'
       else
         raise RequestFailed, "Stability AI API error: #{response.code} - #{response.body}"
       end

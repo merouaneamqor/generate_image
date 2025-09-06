@@ -12,7 +12,7 @@ module GenerateImage
 
     def generate_image(prompt, options = {})
       validate_prompt(prompt)
-      return { error: "HTTP provider not configured" } unless configured?
+      return { error: 'HTTP provider not configured' } unless configured?
 
       endpoint = build_endpoint(options)
       headers = build_headers(options)
@@ -29,7 +29,7 @@ module GenerateImage
         end
 
         process_response(response, options)
-      rescue => e
+      rescue StandardError => e
         raise RequestFailed, "HTTP provider error: #{e.message}"
       end
     end
@@ -49,10 +49,10 @@ module GenerateImage
     # Override these methods in subclasses for custom behavior
 
     def build_endpoint(options)
-      raise NotImplementedError, "Subclasses must implement build_endpoint"
+      raise NotImplementedError, 'Subclasses must implement build_endpoint'
     end
 
-    def build_headers(options)
+    def build_headers(_options)
       {
         'Content-Type' => 'application/json',
         'Authorization' => "Bearer #{@api_key}"
@@ -68,7 +68,7 @@ module GenerateImage
       }
     end
 
-    def process_response(response, options)
+    def process_response(response, _options)
       case response.code.to_i
       when 200
         data = JSON.parse(response.body)
@@ -78,22 +78,22 @@ module GenerateImage
           { image_url: data['image_url'] }
         elsif data['image_base64'] || data['base64']
           { image_base64: data['image_base64'] || data['base64'] }
-        elsif data['data'] && data['data'].is_a?(Array) && data['data'].first
+        elsif data['data'].is_a?(Array) && data['data'].first
           image_data = data['data'].first
           if image_data['url']
             { image_url: image_data['url'] }
           elsif image_data['b64_json'] || image_data['base64']
             { image_base64: image_data['b64_json'] || image_data['base64'] }
           else
-            raise RequestFailed, "Unable to extract image data from response"
+            raise RequestFailed, 'Unable to extract image data from response'
           end
         else
-          raise RequestFailed, "No image data found in response"
+          raise RequestFailed, 'No image data found in response'
         end
       else
         error_message = begin
           JSON.parse(response.body)['error'] || JSON.parse(response.body)['message']
-        rescue
+        rescue StandardError
           response.body
         end
         raise RequestFailed, "HTTP provider error: #{response.code} - #{error_message}"
@@ -107,7 +107,7 @@ module GenerateImage
       super(api_key, ENV['CUSTOM_API_BASE_URL'] || 'https://api.example.com')
     end
 
-    def build_endpoint(options)
+    def build_endpoint(_options)
       "#{@base_url}/v1/images/generate"
     end
 
@@ -123,11 +123,11 @@ module GenerateImage
     end
 
     def available_models
-      ['default-model', 'premium-model', 'fast-model']
+      %w[default-model premium-model fast-model]
     end
 
     def supported_sizes
-      ['256x256', '512x512', '768x768', '1024x1024']
+      %w[256x256 512x512 768x768 1024x1024]
     end
 
     private

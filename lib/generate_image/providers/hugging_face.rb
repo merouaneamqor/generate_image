@@ -5,16 +5,16 @@ require 'uri'
 module GenerateImage
   # Hugging Face provider for image generation
   class HuggingFaceProvider < Provider
-    BASE_URL = 'https://api-inference.huggingface.co'
+    BASE_URL = 'https://api-inference.huggingface.co'.freeze
 
     def initialize(api_key = nil)
-      super(api_key || ENV['HUGGINGFACE_API_KEY'])
+      super(api_key || ENV.fetch('HUGGINGFACE_API_KEY', nil))
       @base_url = ENV['HUGGINGFACE_BASE_URL'] || BASE_URL
     end
 
     def generate_image(prompt, options = {})
       validate_prompt(prompt)
-      return { error: "Hugging Face provider not configured" } unless configured?
+      return { error: 'Hugging Face provider not configured' } unless configured?
 
       model = options[:model] || 'CompVis/stable-diffusion-v1-4'
       endpoint = "#{@base_url}/models/#{model}"
@@ -44,7 +44,7 @@ module GenerateImage
         end
 
         process_response(response)
-      rescue => e
+      rescue StandardError => e
         raise RequestFailed, "Hugging Face API error: #{e.message}"
       end
     end
@@ -56,7 +56,7 @@ module GenerateImage
     end
 
     def supported_sizes
-      ['256x256', '512x512', '768x768', '1024x1024']
+      %w[256x256 512x512 768x768 1024x1024]
     end
 
     private
@@ -75,16 +75,20 @@ module GenerateImage
         # Hugging Face returns binary image data
         { image_base64: Base64.strict_encode64(response.body) }
       when 400
-        error_data = JSON.parse(response.body) rescue {}
+        error_data = begin
+          JSON.parse(response.body)
+        rescue StandardError
+          {}
+        end
         raise RequestFailed, "Hugging Face validation error: #{error_data['error'] || response.body}"
       when 401
-        raise RequestFailed, "Hugging Face authentication failed"
+        raise RequestFailed, 'Hugging Face authentication failed'
       when 403
-        raise RequestFailed, "Hugging Face access forbidden"
+        raise RequestFailed, 'Hugging Face access forbidden'
       when 429
-        raise RequestFailed, "Hugging Face rate limit exceeded"
+        raise RequestFailed, 'Hugging Face rate limit exceeded'
       when 503
-        raise RequestFailed, "Hugging Face model is loading, please retry"
+        raise RequestFailed, 'Hugging Face model is loading, please retry'
       else
         raise RequestFailed, "Hugging Face API error: #{response.code} - #{response.body}"
       end

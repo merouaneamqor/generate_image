@@ -23,9 +23,8 @@ module GenerateImage
     end
 
     def set_default_provider(name)
-      unless @providers.key?(name.to_sym)
-        raise ArgumentError, "Provider '#{name}' not registered"
-      end
+      raise ArgumentError, "Provider '#{name}' not registered" unless @providers.key?(name.to_sym)
+
       @default_provider = name.to_sym
     end
 
@@ -65,9 +64,9 @@ module GenerateImage
       @provider = config.get_provider(provider_name)
 
       # Override API key if provided
-      if api_key && @provider.respond_to?(:api_key=)
-        @provider.instance_variable_set(:@api_key, api_key)
-      end
+      return unless api_key && @provider.respond_to?(:api_key=)
+
+      @provider.instance_variable_set(:@api_key, api_key)
     end
 
     def generate_image(text, options = {})

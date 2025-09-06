@@ -5,7 +5,7 @@ RSpec.describe GenerateImage do
     ENV['OPENAI_API_KEY'] = api_key
   end
 
-  it "has a version number" do
+  it 'has a version number' do
     expect(GenerateImage::VERSION).not_to be nil
   end
 
@@ -129,8 +129,8 @@ RSpec.describe GenerateImage do
     describe 'provider information methods' do
       let(:mock_provider) do
         double('provider').tap do |provider|
-          allow(provider).to receive(:available_models).and_return(['model1', 'model2'])
-          allow(provider).to receive(:supported_sizes).and_return(['256x256', '512x512'])
+          allow(provider).to receive(:available_models).and_return(%w[model1 model2])
+          allow(provider).to receive(:supported_sizes).and_return(%w[256x256 512x512])
           allow(provider).to receive(:name).and_return('test_provider')
         end
       end
@@ -142,11 +142,11 @@ RSpec.describe GenerateImage do
       end
 
       it 'returns available models' do
-        expect(client.available_models).to eq(['model1', 'model2'])
+        expect(client.available_models).to eq(%w[model1 model2])
       end
 
       it 'returns supported sizes' do
-        expect(client.supported_sizes).to eq(['256x256', '512x512'])
+        expect(client.supported_sizes).to eq(%w[256x256 512x512])
       end
 
       it 'returns provider name' do
