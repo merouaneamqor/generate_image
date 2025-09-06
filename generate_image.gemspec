@@ -15,7 +15,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "net-http", "~> 0.6.0"
   spec.add_dependency 'sinatra', "~> 4.1"
   spec.add_dependency 'json', "~> 2.13"
-  spec.add_dependency 'openai', "~> 0.22"
+  spec.add_dependency 'openai', "0.21.1"
 
   spec.files         = `git ls-files`.split($/)
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
