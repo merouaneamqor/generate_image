@@ -1,0 +1,35 @@
+plugins:
+  - rubocop-performance
+
+AllCops:
+  TargetRubyVersion: 3.2
+  NewCops: enable
+  Exclude:
+    - 'vendor/**/*'
+    - 'pkg/**/*'
+    - 'generate_image-*.gem'
+    - '.bundle/**/*'
+
+# Metrics
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*_spec.rb'
+
+Metrics/MethodLength:
+  Exclude:
+    - 'spec/**/*_spec.rb'
+
+# Style
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+# Performance
+Performance/RegexpMatch:
+  Enabled: false
+
+# Gemspec
+Gemspec/RequiredRubyVersion:
+  Enabled: true

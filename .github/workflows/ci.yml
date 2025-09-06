@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  RUBY_VERSION: '3.2'
+
+jobs:
+  # Test across multiple Ruby versions
+  test:
+    name: Test (Ruby ${{ matrix.ruby-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby-version: ['3.2', '3.3'] # Compatible with openai gem requirements
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1.191.0
+      with:
+        ruby-version: ${{ matrix.ruby-version }}
+        bundler-cache: true
+
+    - name: Install dependencies
+      run: |
+        bundle config set --local deployment false
+        bundle config set --local frozen false
+        bundle install --jobs 4 --retry 3
+
+    - name: Run tests
+      run: bundle exec rspec --format progress --format RspecJunitFormatter --out test-results-${{ matrix.ruby-version }}.xml
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-ruby-${{ matrix.ruby-version }}
+        path: test-results-${{ matrix.ruby-version }}.xml
+
+  # Code quality checks
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1.191.0
+      with:
+        ruby-version: ${{ env.RUBY_VERSION }}
+        bundler-cache: true
+
+    - name: Install dependencies
+      run: |
+        bundle config set --local deployment false
+        bundle config set --local frozen false
+        bundle install --jobs 4 --retry 3
+
+    - name: Run RuboCop
+      run: bundle exec rubocop --parallel --format progress --format github
+
+    - name: Security audit
+      run: bundle exec bundle audit check --update
+
+  # Build and test gem
+  build:
+    name: Build & Test Gem
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1.191.0
+      with:
+        ruby-version: ${{ env.RUBY_VERSION }}
+        bundler-cache: true
+
+    - name: Install dependencies
+      run: |
+        bundle config set --local frozen false
+        bundle install --jobs 4 --retry 3
+
+    - name: Build gem
+      run: bundle exec rake build
+
+    - name: Test gem installation
+      run: |
+        gem install pkg/generate_image-*.gem --no-document
+        ruby -e "require 'generate_image'; puts '✅ Gem installed successfully'"
+
+    - name: Upload built gem
+      uses: actions/upload-artifact@v4
+      with:
+        name: built-gem
+        path: pkg/generate_image-*.gem
+        retention-days: 30
