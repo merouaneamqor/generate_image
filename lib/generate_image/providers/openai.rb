@@ -50,6 +50,9 @@ module GenerateImage
     def initialize(api_key = nil)
       super(api_key || ENV['OPENAI_API_KEY'] || ENV['DALL_E_API_KEY'])
       @client = OpenAI::Client.new(access_token: @api_key) if configured?
+    rescue ArgumentError
+      # For backward compatibility with older OpenAI SDK versions
+      @client = OpenAI::Client.new(api_key: @api_key) if configured?
     end
 
     def generate_image(prompt, options = {})
