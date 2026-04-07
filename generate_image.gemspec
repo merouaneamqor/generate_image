@@ -1,27 +1,37 @@
-require_relative 'lib/generate_image/version'
+# frozen_string_literal: true
+
+require_relative "lib/generate_image/version"
 
 Gem::Specification.new do |spec|
-  spec.name          = "generate_image"
-  spec.version       = GenerateImage::VERSION
-  spec.authors       = ["AMQOR Merouane"]
-  spec.email         = ["marouane.amqor@gmail.com"]
+  spec.name = "generate_image"
+  spec.version = GenerateImage::VERSION
+  spec.authors = ["AMQOR Merouane"]
+  spec.email = ["marouaneamqor@gmail.com"]
 
-  spec.summary       = "Generate images using the DALL-E API"
-  spec.description   = "The 'generate_image' gem provides a simple and easy-to-use interface for generating images using the powerful DALL-E API from OpenAI. This Ruby gem can be used in Ruby on Rails projects or any other Ruby projects to create stunning images based on the text you provide. Unleash your imagination and generate images for any use case, from social media posts to marketing materials and beyond."
-  spec.homepage      = "https://github.com/merouaneamqor/generate_image"
-  spec.license       = "MIT"
-  spec.required_ruby_version = Gem::Requirement.new(">= 2.3.0")
+  spec.summary = "OpenAI Images API client (GPT Image, DALL·E) for Ruby"
+  spec.description = <<~DESC
+    Lightweight Ruby client for OpenAI image generation and edits (/v1/images/generations, /v1/images/edits).
+    Defaults to GPT Image models; stdlib-only (Net::HTTP + JSON). Ruby 3.1+.
+  DESC
+  spec.homepage = "https://github.com/merouaneamqor/generate_image"
+  spec.license = "MIT"
+  spec.required_ruby_version = ">= 3.1.0"
 
-  spec.add_dependency "net-http", "~> 0.3.2"
-  spec.add_dependency 'sinatra', "~> 3.0.5"
-  spec.add_dependency 'json', "~> 2.6.3"
-  spec.add_dependency 'openai', "~> 0.3.0"
+  spec.metadata["homepage_uri"] = spec.homepage
+  spec.metadata["source_code_uri"] = spec.homepage
+  spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/main/CHANGELOG.md"
+  spec.metadata["rubygems_mfa_required"] = "true"
 
-  spec.files         = `git ls-files`.split($/)
-  spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
-  spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
+  spec.files = Dir.chdir(__dir__) do
+    `git ls-files -z`.split("\x0").reject { |f| f.match(%r{\A(?:test|spec|features)/}) }
+  rescue StandardError
+    Dir["lib/**/*", "LICENSE.txt", "README.md", "CHANGELOG.md"]
+  end
+  spec.bindir = "exe"
+  spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
-  spec.files = Dir['lib/**/*', 'bin/*', 'LICENSE.txt', 'README.md']
-  spec.files -= Dir['generate_image-*.gem']
 
+  spec.add_development_dependency "rake", "~> 13.0"
+  spec.add_development_dependency "rspec", "~> 3.12"
+  spec.add_development_dependency "webmock", "~> 3.19"
 end
