@@ -1,85 +1,165 @@
 # GenerateImage
-The GenerateImage gem is a Ruby gem that provides an interface for generating images using the OpenAI DALL-E API. This gem can be used in Ruby on Rails projects or any other Ruby projects.
+
+Lightweight **Ruby** client for the **OpenAI Images API**: image generation (`POST /v1/images/generations`) and edits (`POST /v1/images/edits`). Uses only the standard library (`Net::HTTP`, `JSON`). **Ruby >= 3.1**.
+
+> **Deprecation / sunset (OpenAI):** DALL·E 2 and DALL·E 3 are scheduled for **sunset on May 12, 2026**. Prefer **GPT Image** models (`gpt-image-1`, `gpt-image-1.5`, `gpt-image-1-mini`) for new integrations. This gem defaults to `gpt-image-1`.
 
 ## Installation
-Add this line to your application's Gemfile:
 
-    gem 'generate_image'
+Add to your Gemfile:
 
-And then execute:
+```ruby
+gem "generate_image", "~> 2.0"
+```
 
-    bundle install
+Then:
 
-Or install it directly by running:
+```bash
+bundle install
+```
 
-    gem install generate_image
+## Configuration
+
+Set **`OPENAI_API_KEY`** (recommended). The legacy **`DALL_E_API_KEY`** is still read as a fallback if `OPENAI_API_KEY` is unset.
+
+Optional global defaults:
+
+```ruby
+require "generate_image"
+
+GenerateImage.configure do |c|
+  c.api_key = ENV["OPENAI_API_KEY"]
+  c.default_model = "gpt-image-1"
+  c.base_url = "https://api.openai.com"
+  c.default_size = "1024x1024"
+  c.default_quality = "auto"
+  c.default_output_format = "png"
+  c.open_timeout = 30
+  c.read_timeout = 120
+  c.max_retries = 1 # extra attempts after HTTP 429, honors Retry-After
+end
+```
+
+You can also pass an API key per client: `GenerateImage::Client.new("sk-...")`.
+
 ## Usage
-The gem provides a generate_image method, which takes a text argument and returns the generated image URL or image base64 as a hash. The method makes a request to the DALL-E API to generate an image based on the provided text.
 
-Before using the generate_image method, you must set your OpenAI API key as an environment variable named `DALL_E_API_KEY`. The gem uses the `Net::HTTP` library to make API requests and includes error handling to ensure successful image generation. In case of any errors, the method will raise a RequestFailed exception.
+### Generate (GPT Image)
 
-### Examples
+```ruby
+client = GenerateImage::Client.new
 
-    require 'generate_image'
+response = client.generate("A ruby gemstone on velvet, product photo")
 
-    # Set the DALL-E API key
-    ENV['DALL_E_API_KEY'] = 'your_api_key'
+response.b64        # first image base64 (typical for GPT Image)
+response.url        # first HTTPS URL when API returns URLs
+response.images     # => [{ b64_json: "..." }] or [{ url: "..." }], ...
+response.usage      # token usage hash or nil
+response.model      # model used
+response.raw        # full parsed JSON Hash
+```
 
-    # Generate a single image with default options
-    result = GenerateImage.generate_image('A three-story castle made of ice cream')
-    if result[:error]
-      puts result[:error]
-    else
-      puts result[:image_url]
-    end
+Common options (passed as keyword args):
 
-    # Generate a single image with custom options
-    result = GenerateImage.generate_image('A cat playing the piano', model: 'image-alpha-001', num_images: 2, size: '1024x1024', response_format: 'base64', quality: 90)
-    if result[:error]
-      puts result[:error]
-    else
-      puts result[:image_base64]
-    end
-## Options
-The generate_image method accepts a hash of options to customize the generated images. Here are the available options:
+| Option | GPT Image | DALL·E 3 |
+|--------|-----------|----------|
+| `model` | `gpt-image-1`, `gpt-image-1.5`, `gpt-image-1-mini` | `dall-e-3` |
+| `n` | 1–10 | 1 only |
+| `size` | `auto`, `1024x1024`, `1536x1024`, `1024x1536` | `1024x1024`, `1792x1024`, `1024x1792` |
+| `quality` | `auto`, `high`, `medium`, `low` | `standard`, `hd` |
+| `output_format` | `png`, `jpeg`, `webp` | (API returns URLs by default; use `response_format`) |
+| `background` | `transparent`, `opaque`, `auto` | — |
+| `response_format` | `url`, `b64_json` if you need to force format | often `url` |
 
-`model` - The name of the model to use for generating the images. Default is `image-alpha-001`.
+```ruby
+client.generate(
+  "Minimal logo",
+  model: "gpt-image-1-mini",
+  size: "1024x1024",
+  quality: "high",
+  output_format: "png",
+  background: "transparent",
+  n: 2
+)
+```
 
-`num_images` - The number of images to generate. Default is `1`.
+### Generate (DALL·E 3)
 
-`size` - The dimensions of the generated images in the format widthxheight. Default is `512x512`.
+```ruby
+client.generate(
+  "Sunset over the Atlantic",
+  model: "dall-e-3",
+  size: "1792x1024",
+  quality: "hd",
+  response_format: "url"
+)
+```
 
-`response_format` - The format of the response, either `url` or `base64`. Default is `url`.
+### Edit / inpainting
 
-`style` - The model or style to use for generating the images. Default is `nil`, which uses the default style of the selected model.
+Multipart request with at least **`image:`** (path string, `Pathname`, `IO`, or `StringIO`) and **`prompt:`**.
 
-`scale` - The scaling factor for the generated image. Default is `1`.
+```ruby
+client.edit(
+  image: "input.png",
+  prompt: "Add soft studio lighting",
+  model: "gpt-image-1",
+  size: "1024x1024",
+  quality: "auto",
+  mask: "mask.png" # optional
+)
+```
 
-`seed` - The random seed to use for the generation process. Default is `nil`.
+Additional GPT Image–oriented options: `output_format`, `background`, `input_fidelity` (`high` / `low`), `response_format`, `user`.
 
-`quality` - The JPEG compression quality of the generated image. Default is `80`.
+### Errors
 
-`text_model` - The name of the model to use for generating text prompts. Default is `text-davinci-002`.
+| Exception | When |
+|-----------|------|
+| `GenerateImage::AuthenticationError` | 401 / missing API key |
+| `GenerateImage::RateLimitError` | 429 (retried according to `max_retries` and `Retry-After`) |
+| `GenerateImage::ApiError` | Other non-success HTTP responses (`#status_code`, `#body`) |
+| `GenerateImage::ValidationError` | Invalid prompt, model/size/n combination, etc. |
 
-`text_prompt` - The text prompt to use for generating the image. Default is `nil`.
+`GenerateImage::RequestFailed` is an alias for `ApiError` for compatibility with rescues from v1.x.
 
-`text_length` - The maximum length of the generated text. Default is `nil`.
+## Backward compatibility (v1.x)
+
+- `client.generate_image(text, options_hash)` still works but **prints a deprecation warning** and returns a legacy-shaped `Hash` (`:image_url` or `:image_base64`) via `Response#to_h`.
+- Legacy keys: `num_images` → `n`, `response_format: "base64"` → `b64_json` for the API.
+
+Prefer:
+
+```ruby
+response = client.generate("A cat")
+response.url || response.b64
+```
+
+## Migration from 1.x
+
+1. Bump Ruby to **3.1+** and gem to **~> 2.0**.
+2. Set **`OPENAI_API_KEY`** (keep `DALL_E_API_KEY` temporarily if needed).
+3. Replace `generate_image(...)` with `generate(...)` and read `Response` fields instead of only a Hash.
+4. Update defaults mentally: model is **`gpt-image-1`**, size **`1024x1024`**, not DALL·E 2 `512x512` / `image-alpha-001`.
+5. Plan for **DALL·E 2/3 sunset (May 12, 2026)** — move prompts to GPT Image models.
 
 ## Development
-To contribute to the development of this gem, clone the repository and run the following commands to install dependencies and run tests:
 
-    bin/setup
-    rake spec
-You can also run bin/console for an interactive prompt to experiment with the code.
+```bash
+bundle install
+bundle exec rspec
+```
 
-To release a new version, update the version number in version.rb and run:
+Interactive console:
 
-    bundle exec rake release
-
-This will create a git tag for the new version, push the git commits and tags, and upload the .gem file to RubyGems.org.
+```bash
+bin/console
+```
 
 ## Contributing
-Bug reports and pull requests are welcome on the GitHub repository. This project is intended to be a safe and welcoming space for collaboration, and all contributors are expected to adhere to the code of conduct.
+
+Issues and pull requests are welcome on the [GitHub repository](https://github.com/merouaneamqor/generate_image).
 
 ## License
-The GenerateImage gem is open source software, released under the terms of the MIT License.
+
+MIT. See [LICENSE.txt](LICENSE.txt).
